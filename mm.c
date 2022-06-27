@@ -102,7 +102,7 @@ team_t team = {
 /*
  * Globals
  */
-void *free_lists[SEGREGATED_LISTS]; /* Array of segregated free lists */
+void **free_lists; /* Array of segregated free lists */
 
 /*
  * Function prototypes
@@ -122,16 +122,16 @@ static void delete_item(void *ptr);
  */
 int mm_init(void) {
   char *heap_base; // Pointer to beginning of heap
+  void *free_list_base;
 
-  // initialize segregated free lists to NULLs
-  for (int i = 0; i < SEGREGATED_LISTS; i++) {
-    free_lists[i] = NULL;
-  }
-
-  // allocate initial empty heap
-  if ((ssize_t)(heap_base = mem_sbrk(4 * WORD_SIZE)) == -1) {
+  // allocate segregated lists array and initial empty heap
+  if ((ssize_t)(free_list_base =
+                    mem_sbrk((SEGREGATED_LISTS + 4) * WORD_SIZE)) == -1) {
     return -1;
   }
+
+  free_lists = free_list_base;
+  heap_base = free_list_base + SEGREGATED_LISTS * WORD_SIZE;
 
   // padding for DWORD alignment
   PUT_CLEAN(heap_base, 0);
@@ -142,6 +142,11 @@ int mm_init(void) {
 
   // epilogue block header
   PUT_CLEAN(heap_base + (WORD_SIZE * 3), PACK(0, 1));
+
+  // initialize segregated free lists to NULLs
+  for (int i = 0; i < SEGREGATED_LISTS; i++) {
+    free_lists[i] = NULL;
+  }
 
   if (!extend_heap(PAGE_SIZE)) {
     return -1;
