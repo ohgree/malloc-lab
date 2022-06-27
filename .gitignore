@@ -1,0 +1,13 @@
+# macOS General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# vscode
+.vscode
+
+# object files
+*.o
+
+# executable file
+mdriver
